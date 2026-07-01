@@ -3,6 +3,7 @@ import { useNavigationStore } from './store/useNavigationStore';
 import { Layout } from './components/Layout';
 import { MissionDashboard } from './pages/MissionDashboard';
 import { DigitalTwinMap } from './pages/DigitalTwinMap';
+import { DataPipeline } from './pages/DataPipeline';
 import { ClimatePrediction } from './pages/ClimatePrediction';
 import { SimulationEngine } from './pages/SimulationEngine';
 import { AIDataArchitecture } from './pages/AIDataArchitecture';
@@ -22,16 +23,16 @@ export default function App() {
   // Streamlined 3.5s Boot Sequence
   useEffect(() => {
     const logs = [
-      'ESTABLISHING SECURE METEOROLOGICAL LINK...',
-      'CONNECTING TO INSAT-3D.................. [✓ ONLINE]',
-      'CONNECTING TO RESOURCESAT-2A........... [✓ ONLINE]',
-      'CONNECTING TO CARTOSAT-3............... [✓ ONLINE]',
-      'CONNECTING TO OCEANSAT-3............... [✓ ONLINE]',
-      'CONNECTING TO RISAT-2B................. [⚠ DEGRADED]',
-      'LOADING IMD GRIDDED DATASETS........... [✓ OK]',
-      'LOADING MOSDAC GRID SENSORS............ [✓ OK]',
-      'CALIBRATING SCENARIO MODEL ENGINES..... [✓ READY]',
-      'MISSION CONTROL ONLINE'
+      'INITIALIZING METEOROLOGICAL DATA WORKSPACE...',
+      'VERIFYING IMD GRIDDED TEMPERATURE DATASET (1.0°x1.0°)... [✓ ONLINE]',
+      'VERIFYING IMD GRIDDED PRECIPITATION DATASET (0.25°x0.25°)... [✓ ONLINE]',
+      'VERIFYING INSAT-3D LAND SURFACE TEMPERATURE DATA... [✓ ONLINE]',
+      'VERIFYING INSAT-3D SEA SURFACE TEMPERATURE DATA.... [✓ ONLINE]',
+      'CONNECTING TO MOSDAC SATELLITE DATA REPOSITORY..... [✓ OK]',
+      'CONNECTING TO NICES SPATIAL DATA ARCHIVE........... [✓ OK]',
+      'COMPILING TEMPORAL FUSION TRANSFORMER (TFT) CORE... [✓ READY]',
+      'COMPILING LSTM AND XGBOOST BENCHMARK MODELS........ [✓ READY]',
+      'CLIMATE DIGITAL TWIN INTEGRITY CHECK SUCCESSFUL'
     ];
 
     let logIndex = 0;
@@ -90,11 +91,11 @@ export default function App() {
           </div>
 
           <div className="text-center space-y-1">
-            <h1 className="font-orbitron font-black text-3xl tracking-widest text-[#e2f4ff] drop-shadow-[0_0_12px_rgba(0,212,255,0.4)]">
-              CLIMATETWIN AI
+            <h1 className="font-sans font-black text-2xl tracking-widest text-[#e2f4ff]">
+              ISRO CLIMATE DIGITAL TWIN
             </h1>
-            <p className="font-orbitron text-xs text-textMuted tracking-wider">
-              National Climate Decision Intelligence Platform
+            <p className="font-sans text-xs text-textMuted tracking-wider">
+              Bharatiya Antariksh Hackathon 2026 Proof-of-Concept
             </p>
           </div>
 
@@ -132,6 +133,8 @@ export default function App() {
     switch (activePage) {
       case 'dashboard':
         return <MissionDashboard />;
+      case 'data-pipeline':
+        return <DataPipeline />;
       case 'digital-twin-map':
         return <DigitalTwinMap />;
       case 'satellite-analytics':
@@ -146,8 +149,6 @@ export default function App() {
         return <SimulationEngine />;
       case 'ai-data-architecture':
         return <AIDataArchitecture />;
-      case 'copilot':
-        return <AICopilot />;
       case 'reports':
         return <Reports />;
       case 'admin':

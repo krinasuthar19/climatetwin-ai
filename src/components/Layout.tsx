@@ -24,7 +24,8 @@ import {
   Radio,
   ShieldAlert,
   Sprout,
-  ChevronDown
+  ChevronDown,
+  Zap
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -41,6 +42,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     setPaletteOpen,
     notificationsOpen,
     setNotificationsOpen,
+    activeDistrict,
+    setActiveDistrict,
   } = useNavigationStore();
 
   const {
@@ -109,20 +112,16 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   // Core primary workflow pages
   const primaryMenuItems = [
     { id: 'dashboard' as PageId, label: 'Dashboard', icon: Globe },
-    { id: 'digital-twin-map' as PageId, label: 'Digital Twin Map', icon: Map },
+    { id: 'data-pipeline' as PageId, label: 'Data Pipeline & Model Dev', icon: Database },
+    { id: 'digital-twin-map' as PageId, label: 'Climate Digital Twin', icon: Map },
     { id: 'prediction' as PageId, label: 'AI Forecasting', icon: TrendingUp },
     { id: 'simulator' as PageId, label: 'Scenario Simulator', icon: Sliders },
-    { id: 'copilot' as PageId, label: 'Decision Assistant', icon: MessageSquare },
-    { id: 'ai-data-architecture' as PageId, label: 'AI & Data Architecture', icon: Database },
+    { id: 'ai-data-architecture' as PageId, label: 'Project Architecture', icon: Cpu },
   ];
 
-  // Secondary tools (advanced and admin tools)
-  const advancedMenuItems = [
-    { id: 'satellite-analytics' as PageId, label: 'Satellite Analytics', icon: Radio },
-    { id: 'disaster-intelligence' as PageId, label: 'Disaster Intel', icon: ShieldAlert },
-    { id: 'agriculture-intelligence' as PageId, label: 'Agriculture Intel', icon: Sprout },
-    { id: 'reports' as PageId, label: 'Reports Manager', icon: FileText },
-    { id: 'admin' as PageId, label: 'Admin Terminal', icon: Settings },
+  // Optional/Innovation features
+  const innovationMenuItems = [
+    { id: 'copilot' as PageId, label: 'Decision Assistant', icon: MessageSquare },
   ];
 
   // Theme style mapping
@@ -160,14 +159,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   // Commands palette list
   const commandPaletteItems = [
-    { title: 'Predict Flood Risk', shortcut: 'Ctrl+F', action: () => setActivePage('prediction') },
-    { title: 'Open Gujarat Analysis', shortcut: 'Ctrl+G', action: () => { setActivePage('dashboard'); useNavigationStore.getState().setActiveDistrict('Gujarat'); } },
-    { title: 'Generate Climate Report', shortcut: 'Ctrl+R', action: () => setActivePage('reports') },
-    { title: 'Run What-If Simulation', shortcut: 'Ctrl+W', action: () => setActivePage('simulator') },
-    { title: 'Open Satellite View', shortcut: 'Ctrl+S', action: () => setActivePage('dashboard') },
-    { title: 'Configure Threshold Alerts', shortcut: 'Ctrl+E', action: () => setActivePage('admin') },
-    { title: 'Launch AI Copilot', shortcut: 'Ctrl+C', action: () => setActivePage('copilot') },
-    { title: 'AI & Data Architecture Map', shortcut: 'Ctrl+A', action: () => setActivePage('ai-data-architecture') }
+    { title: 'Data Pipeline & Model Dev', shortcut: 'Ctrl+D', action: () => setActivePage('data-pipeline') },
+    { title: 'Open Climate Digital Twin', shortcut: 'Ctrl+M', action: () => setActivePage('digital-twin-map') },
+    { title: 'AI Forecasting Engine', shortcut: 'Ctrl+F', action: () => setActivePage('prediction') },
+    { title: 'Scenario Simulator Console', shortcut: 'Ctrl+W', action: () => setActivePage('simulator') },
+    { title: 'Project Architecture Map', shortcut: 'Ctrl+A', action: () => setActivePage('ai-data-architecture') }
   ];
 
   const filteredCommands = commandPaletteItems.filter(item =>
@@ -176,12 +172,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   // Search Results
   const searchResults = [
-    { name: 'Rajasthan', type: 'State Dashboard', category: 'States', action: () => { setActivePage('dashboard'); useNavigationStore.getState().setActiveDistrict('Rajasthan'); } },
-    { name: 'Assam Zone', type: 'Flood Alert Zone', category: 'Events', action: () => { setActivePage('dashboard'); useNavigationStore.getState().setActiveDistrict('Assam'); } },
-    { name: 'Barmer', type: 'Critical Heat Wave', category: 'Districts', action: () => { setActivePage('dashboard'); useNavigationStore.getState().setActiveDistrict('Barmer'); } },
-    { name: 'INSAT-3D LST Sensor', type: 'Satellite Stream', category: 'Satellites', action: () => setActivePage('admin') },
-    { name: 'Oceansat-3 SST Grid', type: 'Satellite Stream', category: 'Satellites', action: () => setActivePage('admin') },
-    { name: 'Temporal Fusion Transformer model', type: 'AI Prediction', category: 'Models', action: () => setActivePage('ai-data-architecture') },
+    { name: 'Dashboard', type: 'Climate Dashboard', category: 'Pages', action: () => setActivePage('dashboard') },
+    { name: 'Data Pipeline & Model Dev', type: 'IMD/INSAT Pipeline', category: 'Pages', action: () => setActivePage('data-pipeline') },
+    { name: 'Climate Digital Twin', type: 'Digital Twin Visualizer', category: 'Pages', action: () => setActivePage('digital-twin-map') },
+    { name: 'AI Forecasting', type: 'TFT Predictions', category: 'Pages', action: () => setActivePage('prediction') },
+    { name: 'Scenario Simulator', type: 'What-If Console', category: 'Pages', action: () => setActivePage('simulator') },
+    { name: 'Project Architecture', type: 'System Flowchart', category: 'Pages', action: () => setActivePage('ai-data-architecture') },
   ].filter(item => item.name.toLowerCase().includes(searchQuery.toLowerCase()) || item.type.toLowerCase().includes(searchQuery.toLowerCase()));
 
   return (
@@ -194,124 +190,45 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       <header className="h-12 w-full flex items-center justify-between px-4 border-b border-[#0a1f3d] bg-[#050d1a]/90 backdrop-blur-md z-30 shrink-0 select-none">
         
         {/* Left Section */}
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-3 font-sans">
           <div className="flex items-center space-x-2">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" className="h-6 w-6 animate-pulse">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" className="h-6 w-6">
               <circle cx="50" cy="50" r="40" stroke="#00d4ff" strokeWidth="4" fill="none" />
               <path d="M10 50 h80 M50 10 v80" stroke="#00d4ff" strokeWidth="2" />
               <circle cx="50" cy="50" r="10" fill="#7c3aed" />
             </svg>
-            <span className={`font-orbitron font-extrabold text-lg tracking-wider ${getThemeTextGlow()}`}>
-              CLIMATETWIN AI
-            </span>
-          </div>
-          <span className="text-[10px] text-textMuted border border-[#0a1f3d] px-2 py-0.5 rounded font-mono tracking-widest bg-bg">
-            PROTOTYPE v1.1
-          </span>
-        </div>
-
-        {/* Center Section: Telemetry Clock & Status */}
-        <div className="flex items-center space-x-6 font-mono text-xs">
-          <div className="flex items-center space-x-2">
-            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping"></span>
-            <span className="text-emerald-500 font-bold tracking-wider">LIVE DATA FEED</span>
-          </div>
-          
-          <div className="flex items-center space-x-2 bg-bg px-3 py-1 rounded border border-[#0a1f3d]">
-            <Clock className="h-3.5 w-3.5 text-textMuted" />
-            <span className="text-textPrimary font-semibold">{time || '00:00:00 IST'}</span>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <span className="text-textMuted">SYSTEM ALERT PROFILE:</span>
-            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-warning border border-amber-500/30 animate-pulse">
-              ⚠ WATCH
+            <span className="font-extrabold text-[#e2f4ff] text-base tracking-wide uppercase">
+              ClimateTwin ISRO
             </span>
           </div>
         </div>
 
-        {/* Right Section: Satellite States, Bell, Profile, Settings */}
+        {/* Right Section: Pilot Region Select, Date picker, Help */}
         <div className="flex items-center space-x-4">
-          {/* Satellite Telemetries */}
-          <div className="hidden xl:flex items-center space-x-3 text-[10px] font-mono border-r border-[#0a1f3d] pr-4 text-textMuted">
-            <span className="flex items-center space-x-1">
-              <span>INSAT-3D</span>
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-            </span>
-            <span className="flex items-center space-x-1">
-              <span>IMD</span>
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-            </span>
-            <span className="flex items-center space-x-1">
-              <span>MOSDAC</span>
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-            </span>
-          </div>
-
-          {/* Volume Control */}
-          <button 
-            onClick={toggleMute}
-            className="text-textMuted hover:text-[#00d4ff] transition-colors p-1"
-            title={isMuted ? 'Unmute alerts' : 'Mute alerts'}
-          >
-            {isMuted ? <VolumeX className="h-4 w-4 text-danger" /> : <Volume2 className="h-4 w-4" />}
-          </button>
-
-          {/* Notification Bell */}
-          <button
-            onClick={() => setNotificationsOpen(!notificationsOpen)}
-            className={`relative p-1.5 rounded hover:bg-[#0a1f3d] transition-colors ${notificationsOpen ? 'bg-[#0a1f3d] text-[#00d4ff]' : 'text-textMuted'}`}
-          >
-            <Bell className="h-4.5 w-4.5" />
-            <span className="absolute top-0.5 right-0.5 h-2 w-2 bg-danger rounded-full animate-pulse"></span>
-          </button>
-
-          {/* Theme Dropdown Toggle */}
-          <div className="relative">
-            <button
-              onClick={() => setThemeDropdown(!themeDropdown)}
-              className="flex items-center space-x-1.5 px-2.5 py-1 rounded border border-[#0a1f3d] bg-bg hover:border-[#00d4ff]/40 text-textMuted text-xs font-mono"
+          <div className="flex items-center space-x-2 text-xs">
+            <span className="text-textMuted font-sans">Pilot Region:</span>
+            <select
+              value={activeDistrict || ''}
+              onChange={(e) => setActiveDistrict(e.target.value || null)}
+              className="bg-[#050d1a] border border-[#0a1f3d] rounded px-3 py-1 text-xs font-semibold text-textPrimary focus:outline-none focus:border-[#00d4ff]/40"
             >
-              <span className="h-2 w-2 rounded-full bg-[#00d4ff]"></span>
-              <span className="uppercase text-[10px] tracking-wider">{theme}</span>
-            </button>
-
-            {themeDropdown && (
-              <div className="absolute right-0 mt-1.5 w-40 bg-surface border border-[#0a1f3d] rounded-md shadow-2xl z-50 p-1 font-mono text-[11px]">
-                <div className="px-2 py-1 text-[9px] text-textMuted uppercase border-b border-[#0a1f3d] mb-1">
-                  Alert Aesthetics
-                </div>
-                {(['control', 'thermal', 'earth', 'satellite'] as ThemeId[]).map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => {
-                      setTheme(t);
-                      setThemeDropdown(false);
-                    }}
-                    className={`w-full text-left px-2 py-1.5 rounded hover:bg-[#0a1f3d] capitalize flex items-center space-x-2 ${theme === t ? 'text-[#00d4ff]' : 'text-textMuted'}`}
-                  >
-                    <span className={`h-1.5 w-1.5 rounded-full ${
-                      t === 'control' ? 'bg-[#00d4ff]' :
-                      t === 'thermal' ? 'bg-orange-500' :
-                      t === 'earth' ? 'bg-emerald-500' : 'bg-violet-500'
-                    }`}></span>
-                    <span>{t === 'control' ? 'Mission Control' : `${t} Mode`}</span>
-                  </button>
-                ))}
-              </div>
-            )}
+              <option value="">Whole India Map</option>
+              <option value="Rajasthan">Rajasthan (Heatwave & Drought)</option>
+              <option value="Assam">Assam (Flood & Monsoon)</option>
+            </select>
           </div>
 
-          {/* User Role Badge */}
-          <div className="flex items-center space-x-2 border-l border-[#0a1f3d] pl-4">
-            <div className="h-6 w-6 rounded bg-[#0a1f3d] flex items-center justify-center font-bold text-xs text-[#00d4ff]">
-              IS
-            </div>
-            <div className="hidden lg:block text-left">
-              <div className="text-[10px] font-bold text-textPrimary leading-none">ISRO SCIENTIST</div>
-              <div className="text-[8px] text-textMuted uppercase font-mono">Mission Officer</div>
-            </div>
-          </div>
+          <button className="flex items-center space-x-1.5 px-3 py-1 bg-[#050d1a] border border-[#0a1f3d] rounded text-xs font-mono text-textPrimary hover:border-[#00d4ff]/30">
+            <Clock className="h-3.5 w-3.5 text-textMuted" />
+            <span>21 Jun 2025</span>
+          </button>
+
+          <button 
+            className="h-6 w-6 rounded-full border border-[#0a1f3d] flex items-center justify-center text-xs font-bold text-textMuted hover:text-textPrimary hover:border-textPrimary/30 bg-[#050d1a]" 
+            title="Dashboard Info"
+          >
+            ?
+          </button>
         </div>
 
       </header>
@@ -323,7 +240,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         <aside className="group w-16 hover:w-52 h-full flex flex-col justify-between border-r border-[#0a1f3d] bg-[#050d1a]/95 transition-all duration-300 ease-in-out z-20 shrink-0">
           
           {/* Menu Items */}
-          <nav className="flex-1 py-4 space-y-1 overflow-y-auto max-h-[calc(100vh-140px)]">
+          <nav className="flex-1 py-4 space-y-1 overflow-y-auto">
             {primaryMenuItems.map((item) => {
               const Icon = item.icon;
               const isActive = activePage === item.id;
@@ -345,56 +262,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 </button>
               );
             })}
-
-            {/* Divider */}
-            <div className="border-t border-[#0a1f3d] my-2 mx-4 group-hover:block hidden"></div>
-
-            {/* Advanced Operations Collapsible Header */}
-            <button
-              onClick={() => setAdvancedOpen(!advancedOpen)}
-              className="w-full flex items-center h-10 px-5 text-textMuted hover:text-textPrimary transition-all duration-200"
-            >
-              <Cpu className="h-5 w-5 shrink-0" />
-              <span className="ml-4 text-xs font-sans font-semibold tracking-normal text-left group-hover:opacity-100 opacity-0 transition-all duration-300 whitespace-nowrap">
-                Advanced Tools
-              </span>
-              <div className="ml-auto group-hover:opacity-100 opacity-0 transition-opacity">
-                {advancedOpen ? <ChevronDown className="h-3 w-3 text-textMuted" /> : <ChevronRight className="h-3 w-3 text-textMuted" />}
-              </div>
-            </button>
-
-            {/* Advanced Items */}
-            {advancedOpen && advancedMenuItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = activePage === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => setActivePage(item.id)}
-                  className={`w-full flex items-center h-9 px-8 transition-all duration-200 ${getThemeButtonActive(isActive)}`}
-                >
-                  <Icon className={`h-4.5 w-4.5 shrink-0 ${isActive ? '' : 'text-textMuted group-hover:text-textPrimary'} transition-transform group-hover:scale-105`} />
-                  <span className={`ml-3.5 text-[11px] font-sans font-medium tracking-normal text-left transition-all duration-300 group-hover:opacity-100 opacity-0 group-hover:translate-x-0 -translate-x-3 whitespace-nowrap ${isActive ? 'font-bold' : 'text-textMuted'}`}>
-                    {item.label}
-                  </span>
-                </button>
-              );
-            })}
           </nav>
 
-          {/* Bottom Globe Widget */}
-          <div className="p-3 border-t border-[#0a1f3d] flex flex-col items-center group-hover:items-start transition-all overflow-hidden bg-bg/50">
-            <div className="flex items-center space-x-3 w-full pl-2">
-              <div className="h-8 w-8 rounded-full border border-[#0a1f3d] flex items-center justify-center animate-spin [animation-duration:15s] bg-[#050d1a] relative shrink-0">
-                <div className="absolute inset-0.5 rounded-full border border-dashed border-[#00d4ff]/40"></div>
-                <Globe className="h-4.5 w-4.5 text-[#00d4ff]" />
-              </div>
-              <div className="hidden group-hover:block transition-all duration-300">
-                <div className="text-[9px] font-mono text-emerald-400 font-bold">SYSTEM ONLINE</div>
-                <div className="text-[8px] font-mono text-textMuted leading-tight">LATENCY: {syncStatus.dataLatencyMs}ms</div>
-              </div>
-            </div>
-          </div>
         </aside>
 
         {/* MAIN PAGE WRAPPER */}
@@ -441,19 +310,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         )}
       </div>
 
-      {/* BOTTOM WARNING TICKER BAR (32px) */}
-      <footer className="h-8 w-full bg-[#120300] border-t border-[#ff3d5a]/20 flex items-center overflow-hidden shrink-0 z-30 font-mono text-xs select-none">
-        <div className="h-full bg-red-950/40 border-r border-[#ff3d5a]/30 px-4 text-[#ff3d5a] flex items-center space-x-1.5 shrink-0 font-bold">
-          <span className="h-2 w-2 rounded-full bg-red-500 animate-ping"></span>
-          <span>CRITICAL SYSTEM ALERTS</span>
-        </div>
-        <div className="flex-1 overflow-hidden relative flex items-center h-full">
-          <div className="absolute whitespace-nowrap text-[#ff3d5a] font-semibold tracking-wider flex space-x-20 animate-[ticker-scroll_40s_linear_infinite]">
-            <span>[18:14] HEATWAVE WARNING: Rajasthan districts (Barmer, Jaisalmer) exceeding 44°C+ temperature anomaly. Immediate response suggested.</span>
-            <span>[18:10] FLOOD WATCH: Brahmaputra River level at Dhubri gauge recorded at 3.2m above danger threshold. Active evacuation grids flagged.</span>
-            <span>[17:58] CYCLONE WATCH: Low-pressure formation detected in Bay of Bengal region. Tracking path vector models.</span>
-            <span>[17:34] DROUGHT ADVISORY: Vidarbha agricultural zones reports critical soil moisture depletion. NDVI index degraded.</span>
-          </div>
+      {/* BOTTOM METADATA BAR (32px) */}
+      <footer className="h-8 w-full bg-[#050d1a] border-t border-[#0a1f3d] flex items-center overflow-hidden shrink-0 z-30 font-mono text-[10px] text-textMuted select-none px-4">
+        <div className="flex-1 flex justify-between items-center">
+          <span>COORDINATE SYSTEM: WGS 84 / India Meteorological Grid</span>
+          <span>DATASETS: IMD Daily Gridded (0.25° x 0.25°) & ISRO MOSDAC INSAT-3D LST</span>
+          <span>SPATIAL CONSTRAINTS: PILOT REGION GRID (8.0°N - 37.0°N, 68.0°E - 97.0°E)</span>
         </div>
       </footer>
 

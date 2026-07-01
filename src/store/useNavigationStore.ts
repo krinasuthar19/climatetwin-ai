@@ -2,6 +2,7 @@ import { create } from 'zustand';
 
 export type PageId =
   | 'dashboard'
+  | 'data-pipeline'
   | 'digital-twin-map'
   | 'satellite-analytics'
   | 'prediction'
@@ -9,7 +10,6 @@ export type PageId =
   | 'agriculture-intelligence'
   | 'simulator'
   | 'ai-data-architecture'
-  | 'copilot'
   | 'reports'
   | 'admin';
 

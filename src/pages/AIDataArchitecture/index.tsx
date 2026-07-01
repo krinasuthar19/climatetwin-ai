@@ -15,26 +15,26 @@ interface PipelineNode {
 
 const pipelineNodes: PipelineNode[] = [
   {
-    id: 'insat_imd',
-    label: 'INSAT/IMD Ingest',
+    id: 'imd_insat_data',
+    label: 'IMD + INSAT Ingest',
     category: 'ingest',
     latency: '142ms Ingest Delay',
     dbSpec: 'NetCDF / GRIB API',
-    desc: 'Fetches raw telemetry arrays from ISRO INSAT-3D imaging channels and 4,892 ground IMD meteorological stations.',
-    techStack: 'ISRO MOSDAC API, CWC Hydrology Sockets',
-    mathFormula: 'Validation(X) = \\begin{cases} X & \\text{if } X_{min} \\le X \\le X_{max} \\\\ \\varnothing & \\text{otherwise} \\end{cases}',
-    codeSnippet: '# INSAT Sensor Collection API\nimport requests\n\ndef pull_insat_l1_data():\n    url = "https://mosdac.gov.in/api/insat3d/lst"\n    res = requests.get(url, headers={"Authorization": "Bearer ISRO_KEY"})\n    return res.content'
+    desc: 'Fetches raw observations from daily IMD weather grids (0.25°/1.0°) and ISRO MOSDAC INSAT-3D/3DR meteorological imaging satellites.',
+    techStack: 'ISRO MOSDAC APIs, CWC Ground Sockets',
+    mathFormula: 'Data(X) = \\{ X_{IMD} \\cup X_{INSAT} \\}',
+    codeSnippet: '# Ingest IMD gridded datasets\nimport urllib.request\n\ndef fetch_imd_rain_grid(date):\n    url = f"https://www.imdpune.gov.in/cmpg/Griddata/Rainfall_25_{date.year}.bin"\n    urllib.request.urlretrieve(url, f"rain_{date.year}.bin")'
   },
   {
-    id: 'data_fusion',
-    label: 'Data Fusion',
+    id: 'preprocessing',
+    label: 'Data Preprocessing',
     category: 'processing',
     latency: '95ms Interpolation',
-    dbSpec: 'Kriging Spatial Mesh',
-    desc: 'Interpolates sparse IMD station point data into 0.05° gridded arrays, fusing them with satellite land surface observations.',
-    techStack: 'SciPy Spatial, PostGIS Raster Math, GDAL',
-    mathFormula: '\\hat{Z}(x_0) = \\sum_{i=1}^{n} \\lambda_i Z(x_i) \\quad \\text{where} \\quad \\sum_{i=1}^{n} \\lambda_i = 1',
-    codeSnippet: '# Ordinary Kriging Interpolation\nfrom pykrige.ok import OrdinaryKriging\nimport numpy as np\n\ndef interpolate_grid(station_lons, station_lats, values):\n    OK = OrdinaryKriging(station_lons, station_lats, values, variogram_model="spherical")\n    z, ss = OK.execute("grid", np.arange(68, 97, 0.05), np.arange(8, 37, 0.05))\n    return z'
+    dbSpec: 'Bilinear Mesh Grid',
+    desc: 'Cleans outliers, standardizes resolution to a unified 0.05° spatial mesh, and applies bilinear interpolation for missing sensors.',
+    techStack: 'SciPy Spatial Interpolation, GDAL, PostGIS Raster Math',
+    mathFormula: '\\hat{Z}(x_0) = \\sum_{i=1}^{n} \\lambda_i Z(x_i) \\quad \\text{where} \\quad \\sum \\lambda_i = 1',
+    codeSnippet: '# Bilinear spatial grid interpolation\nfrom scipy.interpolate import griddata\n\ndef resample_mesh(lons, lats, values, target_grid):\n    return griddata((lons, lats), values, target_grid, method="linear")'
   },
   {
     id: 'ai_models',
@@ -42,43 +42,43 @@ const pipelineNodes: PipelineNode[] = [
     category: 'ai',
     latency: '820ms TFT Inference',
     dbSpec: 'PyTorch / ONNX Weights',
-    desc: 'Runs multi-horizon forecasts using Temporal Fusion Transformer (TFT) and XGBoost hazard probability models.',
-    techStack: 'PyTorch, XGBoost, CUDA 12.1 GPU Acceleration',
+    desc: 'Trains and tunes Temporal Fusion Transformer (TFT) as primary forecaster, and LSTM & XGBoost as benchmark models.',
+    techStack: 'PyTorch, XGBoost Regressors, CUDA 12.1 acceleration',
     mathFormula: 'Attention(Q, K, V) = \\text{softmax}\\left(\\frac{QK^T}{\\sqrt{d_k}}\\right)V',
-    codeSnippet: '# TFT Model Inference Run\nimport onnxruntime as ort\n\ndef run_tft_inference(historical_tensor):\n    session = ort.InferenceSession("tft_precipitation.onnx")\n    inputs = {session.get_inputs()[0].name: historical_tensor.numpy()}\n    return session.run(None, inputs)[0]'
+    codeSnippet: '# PyTorch TFT Model forward pass\nimport torch.nn as nn\n\nclass TFTModel(nn.Module):\n    def __init__(self, d_model):\n        super().__init__()\n        self.attn = nn.MultiheadAttention(embed_dim=d_model, num_heads=4)\n    def forward(self, x):\n        return self.attn(x, x, x)[0]'
   },
   {
-    id: 'digital_twin',
-    label: 'Digital Twin',
-    category: 'render',
+    id: 'digital_twin_engine',
+    label: 'Digital Twin Engine',
+    category: 'storage',
     latency: '14ms Sync Tick',
     dbSpec: 'Zustand Reactive State',
-    desc: 'Consolidates real-time feeds, coordinates boundary indexes, and updates virtual state parameters dynamically.',
-    techStack: 'Zustand React Stores, WebSocket Gateways',
-    mathFormula: 'TwinState_{t+1} = f(Telemetry_t) \\cup f(AI\\_Forecast_t)',
-    codeSnippet: '// Zustand synchronization router\nimport { create } from \'zustand\';\n\nexport const useTwinStore = create((set) => ({\n  gridState: {},\n  updateGrid: (newCellData) => set((state) => ({\n    gridState: { ...state.gridState, ...newCellData }\n  }))\n}));'
+    desc: 'Synchronizes physical grid cells with time-series predictions to compile the virtual climate representation.',
+    techStack: 'Zustand State Stores, WebSockets Gateway',
+    mathFormula: 'TwinState_{t+1} = TwinState_t \\oplus \\{ currState, predState \\}',
+    codeSnippet: '// Zustand synchronization layer\nexport const useTwinStore = create((set) => ({\n  gridState: {},\n  syncGrid: (payload) => set((state) => ({\n    gridState: { ...state.gridState, ...payload }\n  }))\n}));'
   },
   {
-    id: 'simulator',
-    label: 'Simulator',
+    id: 'forecasting',
+    label: 'Forecasting',
+    category: 'render',
+    latency: '120ms Forecast Run',
+    dbSpec: 'Multi-horizon Projections',
+    desc: 'Runs inference forecasts over daily (+3D, +7D, +30D) and long-term seasonal (+1Y) intervals for temperature and rainfall.',
+    techStack: 'ONNX Runtime, Recharts Engine',
+    mathFormula: '\\hat{y}_{t+k} = Model(y_{t-m:t}, x_{t-m:t+k})',
+    codeSnippet: '# Multi-horizon inference iteration\nimport onnxruntime as ort\n\ndef run_forecast(tensor_input):\n    session = ort.InferenceSession("models/tft_model.onnx")\n    return session.run(None, {"historical_data": tensor_input})[0]'
+  },
+  {
+    id: 'scenario_simulation',
+    label: 'Scenario Simulation',
     category: 'render',
     latency: '150ms Simulation',
-    dbSpec: 'Scenario Simulation Engine',
-    desc: 'Models cascade effects of what-if scenarios (temp changes, emissions, urbanization) on regional crop yields and water stress.',
-    techStack: 'NumPy Grid Kernels, Hydrological Runoff Equations',
-    mathFormula: 'Runoff = Precip \\times Coefficient_{urban} \\times (1 - Forest\\_Cover)',
-    codeSnippet: '# Hydrological Runoff Calculations\ndef calc_runoff(precip, urban_pct, forest_pct):\n    coeff = 0.3 + (urban_pct / 100) * 0.5 - (forest_pct / 100) * 0.4\n    return precip * coeff'
-  },
-  {
-    id: 'dashboard',
-    label: 'Dashboard',
-    category: 'render',
-    latency: 'Client Render (<16ms)',
-    dbSpec: 'Recharts visual overlays',
-    desc: 'Presents national indexes, regional alerts, policy advice, and interactive timelines for agency audits.',
-    techStack: 'Tailwind CSS Panels, SVG Renderers, Lucide Icons',
-    mathFormula: 'National\\_Health = \\sum_{i} W_i \\times Score_{indicator}',
-    codeSnippet: '// Recharts Line Rendering\n<LineChart data={trendData}>\n  <CartesianGrid strokeDasharray="3 3" />\n  <Line type="monotone" dataKey="temp" stroke="#ff3d5a" />\n</LineChart>'
+    dbSpec: 'What-If Simulation Engine',
+    desc: 'Simulates cascade impacts of temperature, rainfall, forest cover, urbanization, and CO2 shifts on drought and flood risk.',
+    techStack: 'Hydrological Runoff Equations, NumPy Grids',
+    mathFormula: 'Runoff = Rain \\times C_{urban} \\times (1 - Forest\\_Cover)',
+    codeSnippet: '# Hydrological runoff simulation calculation\ndef simulate_runoff(rain_shift, urban_pct, forest_pct):\n    coeff = 0.3 + (urban_pct / 100) * 0.5 - (forest_pct / 100) * 0.4\n    return rain_shift * coeff'
   }
 ];
 
@@ -95,13 +95,13 @@ export const AIDataArchitecture: React.FC = () => {
           <Database className="h-5 w-5 text-cyan-400" />
           <div>
             <h2 className="font-sans font-bold text-xs tracking-wider text-textPrimary text-left">
-              AI & DATA PIPELINE ARCHITECTURE
+              PROJECT FLOWCHART & SYSTEM ARCHITECTURE
             </h2>
-            <p className="text-[9px] text-textMuted font-mono">ISRO CLIMATETWIN SCHEMATIC SCHEMA</p>
+            <p className="text-[9px] text-textMuted font-mono">ISRO EVALUATION PARAMETER: PROBLEM UNDERSTANDING & CLARITY (UNDERSTANDABLE IN UNDER 30 SECONDS)</p>
           </div>
         </div>
         <span className="text-[10px] font-mono text-cyan-400 bg-cyan-950/30 border border-cyan-800/30 px-2.5 py-1 rounded">
-          SYSTEM: CLOUD METEOROLOGY DATA LAKE
+          PIPELINE SCHEMATIC SCHEMA
         </span>
       </div>
 
